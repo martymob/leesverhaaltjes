@@ -31,7 +31,7 @@ function StoryDisplay({
           }
           return v + 1;
         });
-      }, 150); // 150ms per woord
+      }, 50); // 50ms per woord - snel maar nog leesbaar
 
       return () => clearInterval(interval);
     } else if (!isAnimating) {

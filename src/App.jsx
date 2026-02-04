@@ -36,6 +36,7 @@ function App() {
   const [subject, setSubject] = useState('');
   const [names, setNames] = useState('');
   const [maxKlanken, setMaxKlanken] = useState(4);
+  const [writingStyle, setWritingStyle] = useState('freekvonk'); // Start met Freek Vonk stijl!
 
   // Story state
   const [story, setStory] = useState('');
@@ -124,7 +125,8 @@ function App() {
         maxKlanken,
         subject,
         names,
-        theme: selectedTheme
+        theme: selectedTheme,
+        writingStyle
       });
 
       setStory(result.story);
@@ -432,6 +434,8 @@ function App() {
               setSubject={setSubject}
               names={names}
               setNames={setNames}
+              writingStyle={writingStyle}
+              setWritingStyle={setWritingStyle}
             />
 
             {/* Settings */}

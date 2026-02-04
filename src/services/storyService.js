@@ -1,6 +1,7 @@
 // Story generation service met Anthropic API
 
 import { validateStory, extractWords } from './validationService';
+import { getStyleById } from '../data/writingStyles';
 
 /**
  * Genereer een verhaal met de Anthropic API
@@ -12,7 +13,8 @@ export const generateStory = async ({
   maxKlanken,
   subject,
   names,
-  theme
+  theme,
+  writingStyle = 'standaard'
 }) => {
   if (!apiKey) {
     throw new Error('Geen API key opgegeven');
@@ -25,6 +27,7 @@ export const generateStory = async ({
   const lettersList = Array.from(selectedLetters).join(', ');
   const focusList = Array.from(focusLetters || []).join(', ');
   const namesList = names ? names.split(',').map(n => n.trim()).filter(n => n) : [];
+  const style = getStyleById(writingStyle);
 
   const prompt = buildPrompt({
     lettersList,
@@ -32,7 +35,8 @@ export const generateStory = async ({
     maxKlanken,
     subject,
     namesList,
-    theme
+    theme,
+    style
   });
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -45,7 +49,7 @@ export const generateStory = async ({
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
+      max_tokens: 1000,
       messages: [
         {
           role: 'user',
@@ -76,7 +80,7 @@ export const generateStory = async ({
 /**
  * Bouw de prompt voor het genereren
  */
-const buildPrompt = ({ lettersList, focusList, maxKlanken, subject, namesList, theme }) => {
+const buildPrompt = ({ lettersList, focusList, maxKlanken, subject, namesList, theme, style }) => {
   return `Je bent een expert in het schrijven van leesverhaaltjes voor kinderen in groep 3 (6-7 jaar oud) die leren lezen met de methode Veilig Leren Lezen.
 
 KRITIEKE REGELS - VOLG DEZE STRIKT:
@@ -100,23 +104,28 @@ KRITIEKE REGELS - VOLG DEZE STRIKT:
 
 5. ${subject ? `ONDERWERP: ${subject}` : theme ? `THEMA: ${theme}` : 'Kies een leuk onderwerp voor kinderen.'}
 
-SCHRIJFSTIJL:
-- Korte, eenvoudige zinnen (max 6-8 woorden per zin)
-- Herhaling van woorden is GOED (helpt bij leren lezen)
-- Maak het verhaal leuk en speels
-- 10-15 zinnen totaal
+SCHRIJFSTIJL - ${style.naam}:
+${style.prompt}
+
+BELANGRIJKE EISEN:
+- KORT verhaal: 6-8 zinnen totaal (niet meer!)
+- Korte zinnen (max 6 woorden per zin)
+- Herhaling van woorden is GOED (helpt bij lezen)
 - Gebruik ALLEEN bestaande Nederlandse woorden
-- Geen moeilijke of onbekende woorden
 - Elke zin op een nieuwe regel
+- Maak het spannend/leuk/grappig passend bij de stijl
 
 FORMAAT:
 - Begin DIRECT met het verhaal (geen titel)
 - Zet woorden met focus-letters tussen sterretjes: *woord*
-- Eindig met een leuke, korte afsluiting
+- Eindig met een korte, leuke afsluiting
 
-BELANGRIJK: Controleer VOOR je antwoord dat ALLE woorden:
-1. Alleen de opgegeven letters bevatten
-2. Niet meer dan ${maxKlanken} klanken hebben
+VOORDAT JE SCHRIJFT - CONTROLEER:
+1. Bevat elk woord ALLEEN de opgegeven letters?
+2. Heeft elk woord MAXIMAAL ${maxKlanken} klanken?
+3. Is het verhaal KORT genoeg (6-8 zinnen)?
+
+Als een woord niet past, kies dan een ANDER woord dat WEL past!
 
 Schrijf nu het verhaal:`;
 };
@@ -190,7 +199,6 @@ Geef ALLEEN de JSON array, geen andere tekst.`;
 
   // Parse JSON from response
   try {
-    // Probeer JSON te extracten uit de response
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
       return JSON.parse(jsonMatch[0]);
@@ -203,36 +211,45 @@ Geef ALLEEN de JSON array, geen andere tekst.`;
 };
 
 /**
- * Regenereer verhaal als validatie faalt (met retry)
+ * Regenereer verhaal als validatie faalt (met retry) - nu PROACTIEF
  */
-export const generateStoryWithRetry = async (params, maxRetries = 2) => {
+export const generateStoryWithRetry = async (params, maxRetries = 3) => {
   let lastError = null;
-  let lastResult = null;
+  let bestResult = null;
+  let bestIssueCount = Infinity;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const result = await generateStory(params);
+      const issueCount = result.validation.issues?.length || 0;
 
-      // Als er geen issues zijn, return direct
+      // Perfect! Geen issues
       if (result.validation.valid) {
+        console.log(`✅ Verhaal geldig na poging ${attempt + 1}`);
         return result;
       }
 
-      // Sla laatste resultaat op voor fallback
-      lastResult = result;
+      // Bewaar beste resultaat (minste issues)
+      if (issueCount < bestIssueCount) {
+        bestResult = result;
+        bestIssueCount = issueCount;
+      }
 
-      // Als er issues zijn en we hebben nog retries, probeer opnieuw
+      // Log voor debugging
       if (attempt < maxRetries) {
-        console.log(`Validatie issues gevonden, poging ${attempt + 2}...`, result.validation.issues);
+        console.log(`⚠️ Poging ${attempt + 1}: ${issueCount} issues gevonden, opnieuw proberen...`);
+        console.log('Issues:', result.validation.issues.map(i => i.message).join(', '));
       }
     } catch (error) {
       lastError = error;
+      console.error(`❌ Poging ${attempt + 1} mislukt:`, error.message);
     }
   }
 
-  // Return laatste resultaat (zelfs met issues) of throw error
-  if (lastResult) {
-    return lastResult;
+  // Return beste resultaat (zelfs met issues) of throw error
+  if (bestResult) {
+    console.log(`📝 Beste resultaat heeft ${bestIssueCount} issues`);
+    return bestResult;
   }
 
   throw lastError || new Error('Kon geen verhaal genereren');

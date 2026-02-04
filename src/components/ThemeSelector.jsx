@@ -1,4 +1,5 @@
 import { STORY_THEMES, getRandomSubject, getSuggestedNames } from '../data/themes';
+import { WRITING_STYLES } from '../data/writingStyles';
 
 function ThemeSelector({
   selectedTheme,
@@ -6,7 +7,9 @@ function ThemeSelector({
   subject,
   setSubject,
   names,
-  setNames
+  setNames,
+  writingStyle,
+  setWritingStyle
 }) {
   const handleThemeSelect = (themeId) => {
     setSelectedTheme(themeId);
@@ -31,8 +34,34 @@ function ThemeSelector({
 
   return (
     <section className="theme-section">
-      <h2>🎨 Kies een thema</h2>
+      <h2>Kies je avontuur</h2>
 
+      {/* Schrijfstijl selector */}
+      <div className="style-section">
+        <label className="style-label">✍️ Schrijfstijl:</label>
+        <div className="style-grid">
+          {Object.values(WRITING_STYLES).map((style) => (
+            <button
+              key={style.id}
+              className={`style-card ${writingStyle === style.id ? 'active' : ''}`}
+              style={{ '--style-color': style.kleur }}
+              onClick={() => setWritingStyle(style.id)}
+              title={style.beschrijving}
+            >
+              <span className="style-icon">{style.icon}</span>
+              <span className="style-name">{style.naam.replace(/^[^\s]+\s/, '')}</span>
+            </button>
+          ))}
+        </div>
+        {writingStyle && WRITING_STYLES[writingStyle]?.voorbeeld && (
+          <p className="style-example">
+            💡 {WRITING_STYLES[writingStyle].voorbeeld}
+          </p>
+        )}
+      </div>
+
+      {/* Thema selector */}
+      <label className="style-label">🎨 Thema:</label>
       <div className="theme-grid">
         {Object.entries(STORY_THEMES).map(([themeId, theme]) => (
           <button
