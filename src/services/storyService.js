@@ -115,6 +115,10 @@ BELANGRIJKE EISEN:
 - Elke zin op een nieuwe regel
 - Maak het spannend/leuk/grappig passend bij de stijl
 
+WAARSCHUWING VOOR 'EU' WOORDEN:
+Gebruik ALLEEN BESTAANDE 'eu' woorden zoals: neus, deur, leuk, deuk, beuk, keus, reus, reuk, jeuk, heup, kleur, speur, dreun, geur, scheur
+GEBRUIK NOOIT verzonnen woorden zoals: peun, meun, teun, seun, geun, peus, meus, peur, meur, feun, etc.
+
 FORMAAT:
 - Begin DIRECT met het verhaal (geen titel)
 - Zet woorden met focus-letters tussen sterretjes: *woord*

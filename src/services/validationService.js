@@ -1,5 +1,7 @@
 // Validatie service voor woorden en verhalen
 
+import { isInvalidWord, isLikelyValidEuWord } from '../data/dutchWords';
+
 // Tweeklanken en speciale lettercombinaties
 // Deze worden als 1 klank geteld
 const MEERLETTER_KLANKEN = [
@@ -147,6 +149,25 @@ export const validateStory = (story, selectedLetters, maxKlanken) => {
           type: 'wrong_letters',
           message: `"${word}" bevat niet-toegestane klanken: ${wrongKlanken.join(', ')}`,
           wrongKlanken
+        });
+      }
+    }
+
+    // Check of het woord echt bestaat (vooral voor eu-woorden)
+    if (isInvalidWord(lower)) {
+      if (!issues.find(i => i.word === lower && i.type === 'invalid_word')) {
+        issues.push({
+          word: lower,
+          type: 'invalid_word',
+          message: `"${word}" is geen bestaand Nederlands woord`
+        });
+      }
+    } else if (!isLikelyValidEuWord(lower)) {
+      if (!issues.find(i => i.word === lower && i.type === 'suspicious_word')) {
+        issues.push({
+          word: lower,
+          type: 'suspicious_word',
+          message: `"${word}" is waarschijnlijk geen bestaand woord`
         });
       }
     }
