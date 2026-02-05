@@ -1,6 +1,6 @@
 // Story generation service met Anthropic API
 
-import { validateStory, extractWords, filterStory } from './validationService';
+import { validateStory, extractWords } from './validationService';
 import { getStyleById } from '../data/writingStyles';
 
 /**
@@ -67,22 +67,13 @@ export const generateStory = async ({
   const data = await response.json();
   const generatedStory = data.content[0].text;
 
-  // STAP 1: Filter het verhaal - vervang foute woorden automatisch
-  const { filteredStory, replacements } = filterStory(generatedStory, selectedLetters, maxKlanken);
-
-  // STAP 2: Valideer het gefilterde verhaal (zou nu minder issues moeten hebben)
-  const validation = validateStory(filteredStory, selectedLetters, maxKlanken);
-
-  // Log vervangingen voor debugging
-  if (replacements.length > 0) {
-    console.log('🔄 Automatische vervangingen:', replacements);
-  }
+  // Valideer het verhaal (alleen rapporteren, niet wijzigen)
+  const validation = validateStory(generatedStory, selectedLetters, maxKlanken);
 
   return {
-    story: filteredStory,
+    story: generatedStory,
     validation,
-    words: extractWords(filteredStory),
-    replacements // Optioneel: laat zien wat er vervangen is
+    words: extractWords(generatedStory)
   };
 };
 
