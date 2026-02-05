@@ -120,8 +120,8 @@ Gebruik ALLEEN BESTAANDE 'eu' woorden zoals: neus, deur, leuk, deuk, beuk, keus,
 GEBRUIK NOOIT verzonnen woorden zoals: peun, meun, teun, seun, geun, peus, meus, peur, meur, feun, etc.
 
 FORMAAT:
-- Begin DIRECT met het verhaal (geen titel)
-- Zet woorden met focus-letters tussen sterretjes: *woord*
+- Begin DIRECT met het verhaal (geen titel)${focusList ? `
+- Zet woorden met focus-letters tussen sterretjes: *woord*` : ''}
 - Eindig met een korte, leuke afsluiting
 
 VOORDAT JE SCHRIJFT - CONTROLEER:
