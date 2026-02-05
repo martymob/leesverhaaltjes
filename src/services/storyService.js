@@ -5,6 +5,9 @@ import { getStyleById } from '../data/writingStyles';
 
 /**
  * Genereer een verhaal met de Anthropic API
+ * @param {Object} params - Generatie parameters
+ * @param {Array} previousIssues - Optioneel: issues van vorige poging voor feedback
+ * @param {string} previousStory - Optioneel: vorig verhaal dat verbeterd moet worden
  */
 export const generateStory = async ({
   apiKey,
@@ -15,7 +18,7 @@ export const generateStory = async ({
   names,
   theme,
   writingStyle = 'standaard'
-}) => {
+}, previousIssues = null, previousStory = null) => {
   if (!apiKey) {
     throw new Error('Geen API key opgegeven');
   }
@@ -29,7 +32,7 @@ export const generateStory = async ({
   const namesList = names ? names.split(',').map(n => n.trim()).filter(n => n) : [];
   const style = getStyleById(writingStyle);
 
-  const prompt = buildPrompt({
+  const basePrompt = buildPrompt({
     lettersList,
     focusList,
     maxKlanken,
@@ -38,6 +41,22 @@ export const generateStory = async ({
     theme,
     style
   });
+
+  // Als er feedback is van een vorige poging, voeg die toe
+  let prompt = basePrompt;
+  if (previousIssues && previousIssues.length > 0 && previousStory) {
+    const problemWords = previousIssues
+      .filter(i => i.word)
+      .map(i => `"${i.word}" (${i.message})`)
+      .join(', ');
+
+    prompt = `${basePrompt}
+
+⚠️ CORRECTIE NODIG - Vorige poging had fouten:
+${problemWords}
+
+Schrijf een NIEUW verhaal dat deze woorden VERMIJDT. Gebruik andere woorden die WEL aan de regels voldoen.`;
+  }
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -242,16 +261,21 @@ Geef ALLEEN de JSON array, geen andere tekst.`;
 };
 
 /**
- * Regenereer verhaal als validatie faalt (met retry) - nu PROACTIEF
+ * Regenereer verhaal als validatie faalt (met retry en feedback)
+ * Bij elke retry worden de specifieke fouten meegegeven zodat Claude
+ * een nieuw coherent verhaal schrijft dat die woorden vermijdt.
  */
 export const generateStoryWithRetry = async (params, maxRetries = 3) => {
   let lastError = null;
   let bestResult = null;
   let bestIssueCount = Infinity;
+  let previousIssues = null;
+  let previousStory = null;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const result = await generateStory(params);
+      // Eerste poging: geen feedback. Volgende pogingen: geef feedback over fouten
+      const result = await generateStory(params, previousIssues, previousStory);
       const issueCount = result.validation.issues?.length || 0;
 
       // Perfect! Geen issues
@@ -266,10 +290,14 @@ export const generateStoryWithRetry = async (params, maxRetries = 3) => {
         bestIssueCount = issueCount;
       }
 
-      // Log voor debugging
+      // Log voor debugging en sla feedback op voor volgende poging
       if (attempt < maxRetries) {
-        console.log(`⚠️ Poging ${attempt + 1}: ${issueCount} issues gevonden, opnieuw proberen...`);
+        console.log(`⚠️ Poging ${attempt + 1}: ${issueCount} issues gevonden, opnieuw proberen met feedback...`);
         console.log('Issues:', result.validation.issues.map(i => i.message).join(', '));
+
+        // Sla issues op voor feedback in volgende poging
+        previousIssues = result.validation.issues;
+        previousStory = result.story;
       }
     } catch (error) {
       lastError = error;
