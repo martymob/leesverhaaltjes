@@ -107,13 +107,28 @@ KRITIEKE REGELS - VOLG DEZE STRIKT:
 SCHRIJFSTIJL - ${style.naam}:
 ${style.prompt}
 
+VERHAALSTRUCTUUR - Elk verhaal moet toewerken naar een CLOU:
+Kies EEN van deze eindstructuren:
+- GRAPJE: Een grappige verrassing of misverstand aan het eind
+- TWIST: Iets blijkt anders te zijn dan gedacht ("Het was geen beer... het was papa!")
+- ONTDEKKING: Het hoofdpersonage leert of vindt iets bijzonders
+- OPLOSSING: Een klein probleempje wordt slim opgelost
+- HERHALING MET VERSCHIL: Iets herhaalt zich maar de laatste keer gaat het anders
+
+Structuur in 6-8 zinnen:
+1-2: START - Wie? Waar? Wat gebeurt er?
+3-5: OPBOUW - Spanning of nieuwsgierigheid opbouwen
+6-8: CLOU - De verrassing, grap, of ontdekking!
+
+BELANGRIJK: De laatste zin moet BEVREDIGEND zijn. Het kind moet willen doorlezen!
+
 BELANGRIJKE EISEN:
 - KORT verhaal: 6-8 zinnen totaal (niet meer!)
 - Korte zinnen (max 6 woorden per zin)
 - Herhaling van woorden is GOED (helpt bij lezen)
 - Gebruik ALLEEN bestaande Nederlandse woorden
 - Elke zin op een nieuwe regel
-- Maak het spannend/leuk/grappig passend bij de stijl
+- Werk toe naar de clou - bouw spanning/nieuwsgierigheid op!
 
 WAARSCHUWING VOOR 'EU' WOORDEN:
 Gebruik ALLEEN BESTAANDE 'eu' woorden zoals: neus, deur, leuk, deuk, beuk, keus, reus, reuk, jeuk, heup, kleur, speur, dreun, geur, scheur
