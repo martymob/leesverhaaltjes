@@ -145,9 +145,9 @@ function LetterSelector({
             </select>
           </div>
 
-          {/* Kern badges */}
+          {/* Kern badges - alle kernen */}
           <div className="kern-badges">
-            {Object.entries(VLL_KERNEN).slice(0, 7).map(([id, kern]) => (
+            {Object.entries(VLL_KERNEN).map(([id, kern]) => (
               <button
                 key={id}
                 className={`kern-badge ${selectedKern === id ? 'active' : ''}`}

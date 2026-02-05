@@ -195,3 +195,60 @@ export const isLikelyValidEuWord = (word) => {
   // Overige woorden: geef voordeel van de twijfel
   return true;
 };
+
+/**
+ * Vervanging-suggesties voor foute woorden
+ * Map van fout woord -> correct alternatief
+ */
+export const WORD_REPLACEMENTS = {
+  // Foute EU woorden -> correcte alternatieven
+  'peun': 'neus',
+  'meun': 'neus',
+  'teun': 'leuk',
+  'seun': 'neus',
+  'geun': 'geur',
+  'beun': 'beuk',
+  'keun': 'keus',
+  'reun': 'reus',
+  'feun': 'leuk',
+  'veun': 'leuk',
+  'deun': 'deuk',
+  'leun': 'leuk',
+  'neun': 'neus',
+  'zeun': 'neus',
+  'weun': 'leuk',
+  'peus': 'neus',
+  'meus': 'neus',
+  'teus': 'reus',
+  'seus': 'neus',
+  'beus': 'neus',
+  'feus': 'neus',
+  'veus': 'neus',
+  'leus': 'reus',
+  'zeus': 'reus',
+  'weus': 'neus',
+  'peur': 'deur',
+  'meur': 'deur',
+  'teur': 'deur',
+  'seur': 'deur',
+  'beur': 'deur',
+  'feur': 'deur',
+  'veur': 'deur',
+  'neur': 'deur',
+  'zeur': 'deur',
+  'weur': 'deur',
+  'seuk': 'deuk',
+  'keuk': 'deuk',
+  'feuk': 'deuk',
+  'veuk': 'deuk',
+  'zeuk': 'deuk',
+  'weuk': 'deuk',
+};
+
+/**
+ * Vind een vervanging voor een fout woord
+ */
+export const getWordReplacement = (word) => {
+  const lower = word.toLowerCase();
+  return WORD_REPLACEMENTS[lower] || null;
+};

@@ -1,6 +1,6 @@
 // Validatie service voor woorden en verhalen
 
-import { isInvalidWord, isLikelyValidEuWord } from '../data/dutchWords';
+import { isInvalidWord, isLikelyValidEuWord, getWordReplacement, COMMON_DUTCH_WORDS } from '../data/dutchWords';
 
 // Tweeklanken en speciale lettercombinaties
 // Deze worden als 1 klank geteld
@@ -215,4 +215,137 @@ export const extractWords = (story) => {
     klanken: countKlanken(word),
     klankList: splitInKlanken(word)
   }));
+};
+
+/**
+ * Filter een verhaal door foute woorden te vervangen of te verwijderen
+ * Dit gebeurt VOOR weergave aan de gebruiker
+ */
+export const filterStory = (story, selectedLetters, maxKlanken) => {
+  if (!story) return { filteredStory: story, replacements: [] };
+
+  const allowedArray = Array.from(selectedLetters);
+  const replacements = [];
+
+  // Vind alle woorden (inclusief die met asterisks voor focus)
+  let filteredStory = story;
+
+  // Extract woorden met hun posities
+  const wordRegex = /\*?([a-zA-Z]+)\*?/g;
+  let match;
+  const wordsToCheck = [];
+
+  while ((match = wordRegex.exec(story)) !== null) {
+    wordsToCheck.push({
+      fullMatch: match[0],
+      word: match[1],
+      index: match.index
+    });
+  }
+
+  // Check elk woord en vervang indien nodig (van achteren naar voren om indexen correct te houden)
+  for (let i = wordsToCheck.length - 1; i >= 0; i--) {
+    const { fullMatch, word } = wordsToCheck[i];
+    const lower = word.toLowerCase();
+    const klankCount = countKlanken(lower);
+    const isFocusWord = fullMatch.startsWith('*') && fullMatch.endsWith('*');
+
+    let replacement = null;
+    let reason = null;
+
+    // Check 1: Foute letters?
+    if (!usesOnlyAllowedLetters(lower, allowedArray)) {
+      reason = 'verkeerde_letters';
+      // Probeer een vervanging te vinden
+      replacement = findSimpleReplacement(lower, allowedArray, maxKlanken);
+    }
+    // Check 2: Te lang?
+    else if (klankCount > maxKlanken) {
+      reason = 'te_lang';
+      replacement = findShorterWord(lower, allowedArray, maxKlanken);
+    }
+    // Check 3: Ongeldig woord?
+    else if (isInvalidWord(lower)) {
+      reason = 'ongeldig_woord';
+      replacement = getWordReplacement(lower);
+    }
+    // Check 4: Verdacht eu-woord?
+    else if (!isLikelyValidEuWord(lower)) {
+      reason = 'verdacht_woord';
+      replacement = getWordReplacement(lower) || findSimilarValidWord(lower, allowedArray, maxKlanken);
+    }
+
+    // Voer vervanging uit
+    if (replacement && reason) {
+      const newWord = isFocusWord ? `*${replacement}*` : replacement;
+
+      // Vervang in de story (case-insensitive maar behoud case van eerste letter)
+      const regex = new RegExp(`\\*?${word}\\*?`, 'gi');
+      filteredStory = filteredStory.replace(regex, (match) => {
+        // Behoud hoofdletter als origineel die had
+        if (match[0] === match[0].toUpperCase() && match[0] !== '*') {
+          return newWord.charAt(0).toUpperCase() + newWord.slice(1);
+        }
+        if (match.startsWith('*') && match[1] === match[1].toUpperCase()) {
+          return '*' + replacement.charAt(0).toUpperCase() + replacement.slice(1) + '*';
+        }
+        return newWord;
+      });
+
+      replacements.push({
+        original: lower,
+        replacement,
+        reason
+      });
+    }
+  }
+
+  return { filteredStory, replacements };
+};
+
+/**
+ * Vind een simpel vervangend woord met toegestane letters
+ */
+const findSimpleReplacement = (word, allowedLetters, maxKlanken) => {
+  // Eenvoudige vervangende woorden per categorie
+  const simpleWords = ['de', 'het', 'een', 'is', 'op', 'in', 'en', 'ja', 'nee'];
+
+  for (const simple of simpleWords) {
+    if (usesOnlyAllowedLetters(simple, allowedLetters) && countKlanken(simple) <= maxKlanken) {
+      return simple;
+    }
+  }
+  return null;
+};
+
+/**
+ * Vind een korter woord
+ */
+const findShorterWord = (word, allowedLetters, maxKlanken) => {
+  const shortWords = ['kat', 'hond', 'vis', 'boom', 'zon', 'maan', 'bal', 'pop', 'auto'];
+
+  for (const short of shortWords) {
+    if (usesOnlyAllowedLetters(short, allowedLetters) && countKlanken(short) <= maxKlanken) {
+      return short;
+    }
+  }
+  return null;
+};
+
+/**
+ * Vind een vergelijkbaar geldig woord
+ */
+const findSimilarValidWord = (word, allowedLetters, maxKlanken) => {
+  // Als het een eu-woord is, zoek een geldig eu-woord
+  if (word.includes('eu')) {
+    const validEuWords = ['neus', 'deur', 'leuk', 'deuk', 'beuk', 'keus', 'reus', 'geur', 'heup'];
+
+    for (const euWord of validEuWords) {
+      if (usesOnlyAllowedLetters(euWord, allowedLetters) && countKlanken(euWord) <= maxKlanken) {
+        return euWord;
+      }
+    }
+  }
+
+  return null;
 };
