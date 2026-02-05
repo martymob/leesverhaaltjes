@@ -1,6 +1,7 @@
 // Story generation service met Anthropic API
 
 import { validateStory, extractWords } from './validationService';
+import { checkGrammar, formatGrammarFeedback } from './grammarService';
 import { getStyleById } from '../data/writingStyles';
 
 /**
@@ -45,17 +46,39 @@ export const generateStory = async ({
   // Als er feedback is van een vorige poging, voeg die toe
   let prompt = basePrompt;
   if (previousIssues && previousIssues.length > 0 && previousStory) {
-    const problemWords = previousIssues
-      .filter(i => i.word)
-      .map(i => `"${i.word}" (${i.message})`)
-      .join(', ');
+    // Splits issues in categorieën voor duidelijke feedback
+    const letterIssues = previousIssues.filter(i => i.type === 'wrong_letters' || i.type === 'too_long');
+    const grammarIssues = previousIssues.filter(i => i.type === 'grammar');
+    const wordIssues = previousIssues.filter(i => i.type === 'invalid_word' || i.type === 'suspicious_word');
+
+    let feedbackParts = [];
+
+    if (letterIssues.length > 0) {
+      feedbackParts.push(`LETTER/KLANK FOUTEN:\n${letterIssues.map(i => `- "${i.word}": ${i.message}`).join('\n')}`);
+    }
+
+    if (grammarIssues.length > 0) {
+      const grammarFeedback = grammarIssues.map(i => {
+        const fix = i.replacements?.length > 0 ? ` → gebruik "${i.replacements[0]}"` : '';
+        return `- "${i.word}": ${i.message}${fix}`;
+      }).join('\n');
+      feedbackParts.push(`GRAMMATICA FOUTEN:\n${grammarFeedback}`);
+    }
+
+    if (wordIssues.length > 0) {
+      feedbackParts.push(`ONBESTAANDE WOORDEN:\n${wordIssues.map(i => `- "${i.word}": ${i.message}`).join('\n')}`);
+    }
 
     prompt = `${basePrompt}
 
 ⚠️ CORRECTIE NODIG - Vorige poging had fouten:
-${problemWords}
 
-Schrijf een NIEUW verhaal dat deze woorden VERMIJDT. Gebruik andere woorden die WEL aan de regels voldoen.`;
+${feedbackParts.join('\n\n')}
+
+Schrijf een NIEUW verhaal dat deze fouten VERMIJDT.
+- Bij grammaticafouten: gebruik de voorgestelde correctie of kies een ander woord
+- Bij letter/klank fouten: kies woorden die WEL aan de regels voldoen
+- Bij onbestaande woorden: gebruik alleen ECHTE Nederlandse woorden`;
   }
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -86,8 +109,26 @@ Schrijf een NIEUW verhaal dat deze woorden VERMIJDT. Gebruik andere woorden die 
   const data = await response.json();
   const generatedStory = data.content[0].text;
 
-  // Valideer het verhaal (alleen rapporteren, niet wijzigen)
+  // Valideer het verhaal op letters/klanken
   const validation = validateStory(generatedStory, selectedLetters, maxKlanken);
+
+  // Check grammatica met LanguageTool
+  const grammarResult = await checkGrammar(generatedStory);
+
+  // Voeg grammar errors toe aan validation issues
+  if (grammarResult.errors.length > 0) {
+    const grammarIssues = grammarResult.errors.map(err => ({
+      word: err.word,
+      type: 'grammar',
+      message: err.message,
+      replacements: err.replacements,
+      ruleId: err.ruleId
+    }));
+
+    validation.issues = [...validation.issues, ...grammarIssues];
+    validation.valid = false;
+    validation.grammarErrors = grammarResult.errors;
+  }
 
   return {
     story: generatedStory,
