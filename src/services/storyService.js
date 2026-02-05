@@ -130,9 +130,21 @@ BELANGRIJKE EISEN:
 - Elke zin op een nieuwe regel
 - Werk toe naar de clou - bouw spanning/nieuwsgierigheid op!
 
-WAARSCHUWING VOOR 'EU' WOORDEN:
-Gebruik ALLEEN BESTAANDE 'eu' woorden zoals: neus, deur, leuk, deuk, beuk, keus, reus, reuk, jeuk, heup, kleur, speur, dreun, geur, scheur
-GEBRUIK NOOIT verzonnen woorden zoals: peun, meun, teun, seun, geun, peus, meus, peur, meur, feun, etc.
+TAALREGELS - CRUCIAAL:
+1. DE/HET moet CORRECT zijn:
+   - DE: boot, kat, hond, maan, zon, boom, deur, neus, beer, vis, kip, koe, bij, muis, roos, pen, tas
+   - HET: huis, bos, bed, ei, oog, oor, been, haar, boek, lied, kind, paard, schaap, konijn
+   - Bij twijfel: kies een ander woord!
+
+2. WERKWOORDEN correct vervoegen:
+   - ik loop, jij loopt, hij/zij loopt
+   - ik zie, jij ziet, hij/zij ziet
+
+3. GEEN verzonnen woorden - alleen BESTAANDE Nederlandse woorden
+
+4. 'EU' WOORDEN - gebruik ALLEEN:
+   neus, deur, leuk, deuk, beuk, keus, reus, reuk, jeuk, heup, kleur, speur, dreun, geur, scheur, leur, beur, heus
+   NOOIT: peun, meun, teun, seun, geun, peus, meus, peur, meur, feun, etc.
 
 FORMAAT:
 - Begin DIRECT met het verhaal (geen titel)${focusList ? `
